@@ -20,6 +20,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 using namespace cv;
+#include <ctime>
 
 #include "vec234.h"
 
@@ -144,11 +145,15 @@ int main(int argc, char **argv)
 
   int nFrame = 0, lastNFrame = 0;
   uint64_t tm = currentTimeMillis();
+  clock_t begin = clock();
 
   for (;;)
   {
     //if (!cap->retrieve(vimg, 0)) break;
     get_new_frame();
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
     nFrame++;
 
     buffer_frame.copyTo(img[nFrame & 1]);
@@ -179,23 +184,33 @@ int main(int argc, char **argv)
       int cc0 = ((int)c1[0] + c2[0] + c3[0] + c4[0]) / 4;
       int cc2 = ((int)c1[2] + c2[2] + c3[2] + c4[2]) / 4;
       double dd = angle(p1, p2, p3) + angle(p2, p3, p4) + angle(p3, p4, p1) + angle(p4, p1, p2);
-      
 
       if (dd < 0.4)
       {
-        dd = abs(atan(d1.y/d1.x));
-      std::ostringstream strs;
-      strs << dd;
-      std::string str = strs.str();
+        dd = abs(atan(d1.y / d1.x));
+        std::ostringstream strs;
+        strs << dd;
+        std::string str = strs.str();
 
-        if(dd<0.4)
+        if (dd < 0.4)
         {
           putText(img[nFrame & 1], str, p1,
                   FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(255, 0, 0), 1, CV_AA);
           showRect(ret[i], cc2, cc1, cc0, 2, img[nFrame & 1]);
         }
       }
+      double fps = (double)nFrame / elapsed_secs;
+      std::ostringstream strs2;
+      strs2 << fps;
+      std::string str2 = strs2.str();
 
+      putText(img[nFrame & 1], str2, cvPoint(10, 10),
+              FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0, 255, 0), 1, CV_AA);
+      if(nFrame==100)
+      {
+        begin = clock();
+        nFrame=0;
+      }
       imshow(winname, img[nFrame & 1]);
       int key = waitKey(1) & 0xff;
       if (key == 27 || key == 13)
